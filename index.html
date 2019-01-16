@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>一个集才华美貌于一身的图片网站</title>
+    <link rel="icon" href="image/图片2-01.png" type="images/x-ico" />
+    <meta charset = "utf-8">
+    <link rel="stylesheet" type="text/css" href="lib/css/layer.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="lib/js/jquery-3.3.1.min.js"></script>
+    <script src="lib/js/layer.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<head class="hero" style="margin: 0">
+    <div class=".hero__centered-content">
+        <section class="hero__centered-content">
+            <h1 class="hero__title">一个集才华美貌与一身的图片网站</h1>
+        </section>
+        <img  class='hero__background-image' src="image/top2.jpeg">
+    </div>
+    <div class="input-group mb-3">
+        <input  style="background: rgba(0,0,0,0.2);color: white" type="text" class="form-control" placeholder="找什么鸭??" aria-label="Recipient's username" aria-describedby="basic-addon2">
+        <div class="input-group-append">
+            <span  style="background: rgba(0,0,0,0.2);" class="input-group-text" id="basic-addon2"><a style="text-decoration: none" onclick="check()" href="#">🔍</a></span>
+        </div>
+    </div>
+</head>
+<!---------------------------------------------------------------------------------->
+<body>
+<div id="app">
+    <div style="position: fixed;top: 0;width: 100%;background-color: white">
+        <div class="topheard">
+            <div class="input-group-prepend">
+                <img src="image/图片2-01.png" style="width: 6%;height: 100%;">&nbsp;&nbsp;
+                <span style="color: black;margin-top:1%;font-weight: bolder">Cheneypic</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="text" class="form-control"  placeholder="嘿~" aria-label="Username" aria-describedby="basic-addon1">
+                <span class="input-group-text" id="basic-addon1" style="background-color: white"><a style="text-decoration: none" onclick="" href="#">🔍</a></span>
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" style="margin-top: 1%;margin-left: 140%;float: left;height: 100%;" onclick="putpic()">提交照片</button>
+                </div>
+            </div>
+        </div>
+        <div id="upload"  style="display:none;width: 30%;padding:1%;background-color: white;z-index: 5000;position: fixed;right: 7px;box-shadow: 0 0 5px;margin-right: 2%">
+            <div style="margin-bottom: 2%"><span>选择要发布的照片：</span>
+                <span style="float: right;cursor: pointer" onclick="closeupload()">✖</span></div>
+            <div  id="uploaddiv">
+                <input id="pic" type="file" style="width: 100%; height:100%;opacity: 0;cursor:pointer" onchange = "selectFile()" />
+            </div>
+            <div style="text-align: center">
+                <input id="uploadname" type="text" class="form-control" placeholder="昵称" v-model="name" aria-label="Username" aria-describedby="basic-addon1"/><br>
+                <textarea id="uploaddesc" v-model="desc" class="form-control" placeholder="图片描述" aria-label="With textarea"></textarea>
+                <button style="margin-top: 2%" type="button" class="btn btn-outline-secondary" onclick="resetpic()">重置图片</button>
+                <button  style="margin-top: 2%" type="button" class="btn btn-outline-secondary" @click="upload">上传</button>
+                <!--<a href="javascript:;" class="a-upload mr10"><input type="file" name="myFiles" id="">点击这里上传文件</a>-->
+            </div>
+        </div>
+        <div id="lidiv" style="width: 100%;padding-bottom: 10px;">
+            <ul style="list-style: none;display: flex;padding: 0;margin: 0">
+                <li class="topli">
+                    <a href="#" style="text-decoration: none">🌊</a>
+                </li>
+                <li class="topli">|</li>
+                <li class="topli">旅行</li>
+                <li class="topli">静物</li>
+                <li class="topli">动物</li>
+                <li class="topli">人文</li>
+            </ul>
+        </div>
+    </div>
+    <div class="masonry" style="margin-top: 20px">
+        <ul style="list-style: none;padding: 0;margin: 0">
+            <li v-for="item in pics" class="item">
+                <img :src="item.src" @click="showdiv(item.src,item.likes,item.description,item.pic_name)" style="cursor: pointer;width: 100%"/>
+            </li>
+        </ul>
+    </div>
+    <a id="scrollup" onclick="smoothscroll()" style="cursor: pointer;position:fixed;z-index: 5001;display:none;right: 10px;bottom: 20px">^</a>
+</div>
+</body>
+<script>
+    var index;
+    var form = new FormData();//通过HTML表单创建FormData对象
+    var vm = new Vue({
+        el:'#app',
+        data:{
+            pics:[],
+            name:'',
+            desc:''
+        },
+        methods:{
+            showdiv(src,likes,desc,name) {
+                index = layer.open({
+                    type: 1,
+                    title: false,
+                    // skin: 'layui-layer-nobg',
+                    area: ['90%', '90%'], //宽高
+                    offset: 'auto',
+                    anim: 2,
+                    shadeClose: true, //开启遮罩关闭
+                    closeBtn: 1, //不显示关闭按钮
+                    content:
+                        '<span style="float: left;cursor: pointer;font-weight: bold;color: gainsboro;margin-left: 1%;margin-top: 5px;font-size: 20px;position: fixed" onclick="closedesc()">X</span>' +
+                        '<span style="float: left;margin-top: 1%;font-weight: bold;margin-left: 6%">'+name+'<br><span style="color: gray;font-weight: normal;font-size: 12px;margin-top: 0">2019/01/15</span></span>'+
+                        '<div style="text-align: right">' +
+                        '<button style="margin-right: 1%;margin-top: 1%" align="center" class="btn btn-outline-secondary">💖'+likes+'</button>' +
+                        '<button style="margin-right: 5%;margin-top: 1%" align="center" class="btn btn-outline-secondary">下载</button></div>'+
+                        '<div><p align="center"><img class="imgs" style="cursor:pointer;" src="'+src+'"/></p></div>'+
+                        '<div style="margin-top: -1%;margin-left: 5%">' +
+                        '<span class="input-group-text" id="basic-addon1" style="width: 95%;margin-bottom: 2%">'+desc+'</span>'
+
+                });
+            },
+            upload(){
+                if (this.name.length <= 0) {
+                     layer.tips('昵称不能为空','#uploadname');
+                    return
+                }else if(this.name.length > 16){
+                    layer.tips('不能超过16位','#uploadname');
+                    return
+                }else if(this.desc.length>50){
+                    layer.tips('不能超过50位','#uploaddesc');
+                    return
+                }else if(form.get("file") == null){
+                    layer.tips('你还没选图片呢','#pic')
+                }
+                form.append("name",this.name);
+                form.append("desc",this.desc);
+            }
+        },
+        created(){
+            var _this = this;
+            axios.get('http://localhost:8080/getallpic')
+                .then(function (response) {
+                    // handle success
+                    _this.pics = response.data
+                })
+                .catch(function (error) {
+                    // handle error
+                    console.log(error);
+                });
+        }
+    });
+    window.onscroll= function(){
+        //变量t是滚动条滚动时，距离顶部的距离
+        var t = document.documentElement.scrollTop||document.body.scrollTop;
+        var clientHeight = document.body.clientHeight;
+        var screen = document.documentElement.clientHeight;
+        var scrollup = document.getElementById('scrollup');
+        //当滚动到距离顶部200px时，返回顶部的锚点显示
+        if(t>=200){
+            scrollup.style.display="block";
+        }else{          //恢复正常
+            scrollup.style.display="none";
+        }
+        if (t>clientHeight-screen-clientHeight/10){
+            console.log("我在加载了")
+        }
+    };
+    function smoothscroll() {
+        var currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
+        if (currentScroll > 0) {
+            window.requestAnimationFrame(smoothscroll);
+            window.scrollTo (0,currentScroll - (currentScroll/5));
+        }
+    }
+    // -------------------------------------------------------------------------
+    var url = '127.0.0.1:8080/';
+    function putpic() {
+        document.getElementById("upload").style.display= "block";
+    }
+    function closeupload() {
+        document.getElementById("upload").style.display = "none";
+    }
+    function resetpic() {
+        var result = document.getElementById("uploaddiv");
+        form = new FormData();
+        result.innerHTML = '<input id="pic" type="file" style="width: 100%; height:100%;opacity: 0;cursor:pointer" onchange = "selectFile()"/>'
+    }
+    function selectFile(){
+        var files = document.getElementById('pic').files;
+        if(files.length === 0){
+            return;
+        }
+        var file = files[0];
+        //把上传的图片显示出来
+        var reader = new FileReader();
+        // 将文件以Data URL形式进行读入页面
+        console.log(reader);
+        reader.readAsBinaryString(file);
+        reader.onload = function(f){
+            var result = document.getElementById("uploaddiv");
+            var src = "data:" + file.type + ";base64," + window.btoa(this.result);
+            console.log(src)
+            result.innerHTML = '<img style="width: 100%;height: 100%;object-fit: cover;" src ="'+src+'"/>';
+        }
+        form.append('file',file);
+    }
+    function closedesc(){
+        layer.close(index);
+    }
+</script>
+<style>
+    #scrollup{
+        background: #777;
+        color:#eee;
+        font-size: 40px;
+        text-align: center;
+        text-decoration: none;
+        bottom:65px;
+        right:20px;
+        overflow: hidden;
+        width:46px;
+        height:46px;
+        border:none;
+        opacity:.8;
+    }
+    #uploaddiv{
+        background-image: url('image/1x.png');
+        cursor:pointer;
+        width: 100%;
+        height: 300px;
+        background-color: white;
+        border:2px dashed darkgrey ;
+        text-align: center;
+        margin-bottom: 3%;
+        background-position: center center;
+        background-repeat: no-repeat;
+    }
+    .imgs{
+        margin-top: 1%;
+        width: 90%;
+        height: auto;
+    }
+    .masonry {
+        column-count: 5; column-gap: 0;
+    }
+    .item {
+        width: 100%;
+        break-inside: avoid;
+        box-sizing: border-box;
+        padding: 0 5px 10px;
+        transition: all 0.6s;
+    }
+    .item:hover{
+
+        opacity:0.7;
+        filter:alpha(opacity=70);
+    }
+    @media (min-width: 400px) {
+        .masonry { column-count: 2; }
+    }
+    @media (min-width: 1200px) {
+        .masonry { column-count: 3; }
+    }
+    #lidiv{
+        margin-left: 7%;
+    }
+    .topli{
+        margin-left: 2%;
+        letter-spacing: 7px;
+        /*margin-right: 10px;*/
+        color: rgba(68, 68, 68, 0.75);
+        font-size: 15px;
+        cursor: pointer;
+    }
+    .topheard{
+        width: 100%;
+        height: 70px;
+    }
+    .input-group-prepend{
+        width: 80%;
+        height: 70%;
+        color: white;
+        margin-left: 1%;
+        margin-top: 1%;
+    }
+
+    .hero__title {
+        display: block;
+        font-size: 32px;
+        line-height: 42px;
+        letter-spacing: -.8px;
+        margin-top: 0;
+        margin-bottom: 21px;
+        font-weight: 700;
+        color: white;
+        position:absolute;
+        top:260px;
+        left:26%;
+    }
+    .hero{
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        padding-top: 66px;
+        padding-bottom: 66px;
+        color: #fff;
+        background-color: #ccc;
+        height: 100%;
+        max-height: 500px;
+        z-index: 0;
+    }
+    .hero__background-image{
+        width: 100%;
+        height:540px;
+        -o-object-fit: cover;
+        object-fit: cover;
+        background: #232a34;
+    }
+    .input-group{
+        font-size: 30px;
+        letter-spacing: 10px;
+        position: absolute;
+        top:320px;
+        left: 25%;
+        width: 50%;
+        height: auto;
+    }
+
+
+</style>
+</html>
