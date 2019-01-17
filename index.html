@@ -28,6 +28,15 @@
 <!---------------------------------------------------------------------------------->
 <body>
 <div id="app">
+
+    <div class="masonry" style="margin-top: 20px">
+        <ul style="list-style: none;padding: 0;margin: 0">
+            <li v-for="item in pics" class="item">
+                <img  :src="item.src" @click="showdiv(item.src,item.likes,item.description,item.pic_name,item.time,item.download,item.pic_id)" style="cursor: pointer;width: 100%"/>
+            </li>
+        </ul>
+    </div>
+    <a id="scrollup" onclick="smoothscroll()" style="cursor: pointer;position:fixed;z-index: 101;display:none;right: 10px;bottom: 20px">^</a>
     <div style="position: fixed;top: 0;width: 100%;background-color: white">
         <div class="topheard">
             <div class="input-group-prepend">
@@ -40,7 +49,7 @@
                 </div>
             </div>
         </div>
-        <div id="upload"  style="display:none;width: 30%;padding:1%;background-color: white;z-index: 5000;position: fixed;right: 7px;box-shadow: 0 0 5px;margin-right: 2%">
+        <div id="upload"  style="display:none;width: 30%;padding:1%;background-color: white;z-index: 100;position: fixed;right: 7px;box-shadow: 0 0 5px;margin-right: 2%">
             <div style="margin-bottom: 2%"><span>选择要发布的照片：</span>
                 <span style="float: right;cursor: pointer" onclick="closeupload()">✖</span></div>
             <div  id="uploaddiv">
@@ -50,7 +59,7 @@
                 <input id="uploadname" type="text" class="form-control" placeholder="昵称" v-model="name" aria-label="Username" aria-describedby="basic-addon1"/><br>
                 <textarea id="uploaddesc" v-model="desc" class="form-control" placeholder="图片描述" aria-label="With textarea"></textarea>
                 <button style="margin-top: 2%" type="button" class="btn btn-outline-secondary" onclick="resetpic()">重置图片</button>
-                <button  style="margin-top: 2%" type="button" class="btn btn-outline-secondary" @click="upload">上传</button>
+                <button id="uploadbutton" style="margin-top: 2%" type="button" class="btn btn-outline-secondary" @click="upload">上传</button>
                 <!--<a href="javascript:;" class="a-upload mr10"><input type="file" name="myFiles" id="">点击这里上传文件</a>-->
             </div>
         </div>
@@ -67,28 +76,26 @@
             </ul>
         </div>
     </div>
-    <div class="masonry" style="margin-top: 20px">
-        <ul style="list-style: none;padding: 0;margin: 0">
-            <li v-for="item in pics" class="item">
-                <img :src="item.src" @click="showdiv(item.src,item.likes,item.description,item.pic_name)" style="cursor: pointer;width: 100%"/>
-            </li>
-        </ul>
-    </div>
-    <a id="scrollup" onclick="smoothscroll()" style="cursor: pointer;position:fixed;z-index: 5001;display:none;right: 10px;bottom: 20px">^</a>
 </div>
 </body>
 <script>
     var index;
     var form = new FormData();//通过HTML表单创建FormData对象
+    var coollike = false;
+    var cooldownload = false;
+    var picid = -1;
     var vm = new Vue({
         el:'#app',
         data:{
             pics:[],
             name:'',
-            desc:''
+            desc:'',
+            cool:false,
+            pagenumber:1
         },
         methods:{
-            showdiv(src,likes,desc,name) {
+            showdiv(src,likes,desc,name,time,download,id) {
+                picid = id;
                 index = layer.open({
                     type: 1,
                     title: false,
@@ -98,16 +105,18 @@
                     anim: 2,
                     shadeClose: true, //开启遮罩关闭
                     closeBtn: 1, //不显示关闭按钮
+                    end:function () {
+                        coollike = false;
+                    },
                     content:
-                        '<span style="float: left;cursor: pointer;font-weight: bold;color: gainsboro;margin-left: 1%;margin-top: 5px;font-size: 20px;position: fixed" onclick="closedesc()">X</span>' +
-                        '<span style="float: left;margin-top: 1%;font-weight: bold;margin-left: 6%">'+name+'<br><span style="color: gray;font-weight: normal;font-size: 12px;margin-top: 0">2019/01/15</span></span>'+
+                        '<span style="float: left;cursor: pointer;font-weight: bold;color: gainsboro;margin-left: 1%;margin-top: 5px;font-size:20px;position: fixed" onclick="closedesc()">X</span>' +
+                        '<span style="float: left;margin-top: 1%;font-weight: bold;margin-left: 6%">'+name+'<br><span style="color: gray;font-weight: normal;font-size: 12px;margin-top: 0">'+time+'</span></span>'+
                         '<div style="text-align: right">' +
-                        '<button style="margin-right: 1%;margin-top: 1%" align="center" class="btn btn-outline-secondary">💖'+likes+'</button>' +
-                        '<button style="margin-right: 5%;margin-top: 1%" align="center" class="btn btn-outline-secondary">下载</button></div>'+
+                        '<button id="likesbutton" onclick="uplikes()" style="margin-right: 1%;margin-top: 1%" align="center" class="btn btn-outline-secondary">💚'+likes+'</button>' +
+                        '<a download="" href="http://localhost:63342/alicepichtml/'+src+'"><button id="downloadbutton" onclick="updownload()" style="margin-right: 5%;margin-top: 1%" align="center" class="btn btn-outline-secondary">下载'+download+'</button></a></div>'+
                         '<div><p align="center"><img class="imgs" style="cursor:pointer;" src="'+src+'"/></p></div>'+
                         '<div style="margin-top: -1%;margin-left: 5%">' +
                         '<span class="input-group-text" id="basic-addon1" style="width: 95%;margin-bottom: 2%">'+desc+'</span>'
-
                 });
             },
             upload(){
@@ -125,37 +134,124 @@
                 }
                 form.append("name",this.name);
                 form.append("desc",this.desc);
+                this.name = '';
+                this.desc='';
+                var result = document.getElementById("uploaddiv");
+                result.innerHTML = '<input id="pic" type="file" style="width: 100%; height:100%;opacity: 0;cursor:pointer" onchange = "selectFile()"/>'
+                layer.tips('上传中...','#uploadbutton');
+                axios.post("http://39.105.22.132:8080/uploadpic",form,{headers: {'Content-Type':'multipart/form-data'}
+                }).then(function (response) {
+                    layer.msg('上传成功')
+                    window.setTimeout(function (args) {
+                        window.location.reload()
+                    }, 1000);
+                })
+                .catch(function (error) {
+                    layer.msg('你没网')
+                });
+                form = new FormData();
+            },
+            onscroll(){
+
             }
         },
         created(){
             var _this = this;
-            axios.get('http://localhost:8080/getallpic')
+            axios.get('http://39.105.22.132:8080/getpic?pagenumber=1&pagesize=15')
                 .then(function (response) {
                     // handle success
-                    _this.pics = response.data
+                    if(response.data.info==="error"){
+                        layer.msg("你错了，换个网站再试吧")
+                        return
+                    }
+                    _this.pics = response.data.info
                 })
                 .catch(function (error) {
                     // handle error
-                    console.log(error);
+                    layer.msg("网络异常")
                 });
+        },
+        mounted(){
+            var _this = this;
+            window.onscroll= function(){
+                //变量t是滚动条滚动时，距离顶部的距离
+                var t = document.documentElement.scrollTop||document.body.scrollTop;
+                var clientHeight = document.body.clientHeight;
+                var screen = document.documentElement.clientHeight;
+                var scrollup = document.getElementById('scrollup');
+                //当滚动到距离顶部200px时，返回顶部的锚点显示
+                if(t>=200){
+                    scrollup.style.display="block";
+                }else{          //恢复正常
+                    scrollup.style.display="none";
+                }
+                if (t>clientHeight-screen-clientHeight/10){
+                    if (_this.cool) {
+                        return
+                    }
+                    _this.cool = true;
+                    _this.pagenumber+=1;
+                    axios.get("http://39.105.22.132:8080/getpic?pagenumber="+_this.pagenumber+"&pagesize=15")
+                        .then(function (response) {
+                            if(response.data.info==="error"){
+                                layer.msg('你又错了');
+                                return
+                            }
+                            if (response.data.info === "Empty") {
+                                layer.msg('没了')
+                                return
+                            }
+                            _this.pics = _this.pics.concat(response.data.info)
+                            _this.cool = false
+                        })
+                        .catch(function (error) {
+                        // handle error
+                        layer.msg("网络异常")
+                    });
+                }
+            };
         }
     });
-    window.onscroll= function(){
-        //变量t是滚动条滚动时，距离顶部的距离
-        var t = document.documentElement.scrollTop||document.body.scrollTop;
-        var clientHeight = document.body.clientHeight;
-        var screen = document.documentElement.clientHeight;
-        var scrollup = document.getElementById('scrollup');
-        //当滚动到距离顶部200px时，返回顶部的锚点显示
-        if(t>=200){
-            scrollup.style.display="block";
-        }else{          //恢复正常
-            scrollup.style.display="none";
+    function uplikes() {
+        if(coollike){
+            return
         }
-        if (t>clientHeight-screen-clientHeight/10){
-            console.log("我在加载了")
+        coollike = true;
+        axios.get('http://39.105.22.132:8080/uplikes?id='+picid).then(function (response) {
+            if (response.data === 'successful') {
+                document.getElementById("likesbutton").innerText = '💚'+(parseInt(document.getElementById("likesbutton").innerText.substring(2))+1);
+                return
+            }
+            if (response.data === 'error') {
+                layer.msg("当前环境异常，请刷新后重试");
+                return
+            }
+            layer.msg("当前环境异常，请刷新后重试");
+        }).catch(function (reason) {
+            layer.msg("当前网络异常，请重试");
+            coollike = false;
+        });
+    }
+    function updownload() {
+        if(cooldownload){
+            return
         }
-    };
+        cooldownload = true;
+        axios.get('http://39.105.22.132:8080/updown?id='+picid).then(function (response) {
+            if (response.data === 'successful') {
+                document.getElementById("downloadbutton").innerText = '下载'+(parseInt(document.getElementById("downloadbutton").innerText.substring(2))+1);
+                return
+            }
+            if (response.data === 'error') {
+                layer.msg("当前环境异常，请刷新后重试");
+                return
+            }
+            layer.msg("当前环境异常，请刷新后重试");
+        }).catch(function (reason) {
+            layer.msg("当前网络异常，请重试");
+            cooldownload = false;
+        });
+    }
     function smoothscroll() {
         var currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
         if (currentScroll > 0) {
@@ -164,7 +260,6 @@
         }
     }
     // -------------------------------------------------------------------------
-    var url = '127.0.0.1:8080/';
     function putpic() {
         document.getElementById("upload").style.display= "block";
     }
@@ -185,12 +280,10 @@
         //把上传的图片显示出来
         var reader = new FileReader();
         // 将文件以Data URL形式进行读入页面
-        console.log(reader);
         reader.readAsBinaryString(file);
         reader.onload = function(f){
             var result = document.getElementById("uploaddiv");
             var src = "data:" + file.type + ";base64," + window.btoa(this.result);
-            console.log(src)
             result.innerHTML = '<img style="width: 100%;height: 100%;object-fit: cover;" src ="'+src+'"/>';
         }
         form.append('file',file);
@@ -239,10 +332,9 @@
         break-inside: avoid;
         box-sizing: border-box;
         padding: 0 5px 10px;
-        transition: all 0.6s;
+        transition: all 0.2s;
     }
     .item:hover{
-
         opacity:0.7;
         filter:alpha(opacity=70);
     }
@@ -300,7 +392,6 @@
         background-color: #ccc;
         height: 100%;
         max-height: 500px;
-        z-index: 0;
     }
     .hero__background-image{
         width: 100%;
