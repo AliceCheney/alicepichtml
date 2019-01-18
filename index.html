@@ -16,7 +16,7 @@
         <section class="hero__centered-content">
             <h1 class="hero__title">一个集才华美貌与一身的图片网站</h1>
         </section>
-        <img  class='hero__background-image' src="image/top2.jpeg">
+        <img  class='hero__background-image' src="image/top.jpg">
     </div>
     <div class="input-group mb-3">
         <input  style="background: rgba(0,0,0,0.2);color: white" type="text" class="form-control" placeholder="找什么鸭??" aria-label="Recipient's username" aria-describedby="basic-addon2">
@@ -28,7 +28,6 @@
 <!---------------------------------------------------------------------------------->
 <body>
 <div id="app">
-
     <div class="masonry" style="margin-top: 20px">
         <ul style="list-style: none;padding: 0;margin: 0">
             <li v-for="item in pics" class="item">
@@ -53,7 +52,7 @@
             <div style="margin-bottom: 2%"><span>选择要发布的照片：</span>
                 <span style="float: right;cursor: pointer" onclick="closeupload()">✖</span></div>
             <div  id="uploaddiv">
-                <input id="pic" type="file" style="width: 100%; height:100%;opacity: 0;cursor:pointer" onchange = "selectFile()" />
+                <input id="pic" type="file" accept="image/gif, image/png, image/jpg, image/jpeg, image/bmp" style="width: 100%; height:100%;opacity: 0;cursor:pointer" onchange = "selectFile()" />
             </div>
             <div style="text-align: center">
                 <input id="uploadname" type="text" class="form-control" placeholder="昵称" v-model="name" aria-label="Username" aria-describedby="basic-addon1"/><br>
@@ -107,6 +106,7 @@
                     closeBtn: 1, //不显示关闭按钮
                     end:function () {
                         coollike = false;
+                        cooldownload = false;
                     },
                     content:
                         '<span style="float: left;cursor: pointer;font-weight: bold;color: gainsboro;margin-left: 1%;margin-top: 5px;font-size:20px;position: fixed" onclick="closedesc()">X</span>' +
@@ -141,18 +141,13 @@
                 layer.tips('上传中...','#uploadbutton');
                 axios.post("http://39.105.22.132:8080/uploadpic",form,{headers: {'Content-Type':'multipart/form-data'}
                 }).then(function (response) {
-                    layer.msg('上传成功')
-                    window.setTimeout(function (args) {
-                        window.location.reload()
-                    }, 1000);
+                    layer.msg('上传成功，待审核')
+                    document.getElementById("upload").style.display = "none";
                 })
                 .catch(function (error) {
                     layer.msg('你没网')
                 });
                 form = new FormData();
-            },
-            onscroll(){
-
             }
         },
         created(){
