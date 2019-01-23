@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" href="image/titleimg.png" type="images/x-ico" />
+    <meta charset = "utf-8">
+    <link rel="stylesheet" type="text/css" href="lib/css/layer.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="lib/js/jquery-3.3.1.min.js"></script>
+    <script src="lib/js/layer.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<!---------------------------------------------------------------------------------->
+<body>
+<div id="app">
+    <head>
+        <title>{{search}}</title>
+        <div style="width: 100%;height: 80px"></div>
+    </head>
+    <h2>{{search}}</h2>
+    <h3 v-if="nonesearch">在👆输入要搜索的图片名字，或者<a href="index.html" style="text-decoration: none">返回主页</a></h3>
+    <h4 v-if="nonepic">没有找到与此相关的图片，您可以<a href="index.html" style="text-decoration: none">返回主页</a></h4>
+    <div class="masonry" style="margin-top: 20px">
+        <ul style="list-style: none;padding: 0;margin: 0">
+            <li v-for="item in pics" class="item">
+                <img  :src="item.src" @click="showdiv(item.src,item.likes,item.description,item.pic_name,item.time,item.download,item.pic_id)" style="cursor: pointer;width: 100%"/>
+            </li>
+        </ul>
+    </div>
+    <div style="top: 0;width: 100%;background-color: white;position: fixed">
+        <div class="topheard">
+            <div class="input-group-prepend">
+                <img onclick="backhome()" src="image/titleimg.png" style="cursor: pointer;width: 6%;height: 100%;">&nbsp;&nbsp;
+                <span onclick="backhome()" style="cursor: pointer;color: black;margin-top:1%;font-weight: bolder">Cheneypic</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <input id="searchtop" onkeypress="searchtop()"  type="text" class="form-control"  placeholder="嘿~" aria-label="Username" aria-describedby="basic-addon1">
+                <span class="input-group-text" id="basic-addon1" style="background-color: white"><a style="text-decoration: none" onclick="" href="#">🔍</a></span>
+            </div>
+            <hr size="5px" noshade=true color="#fafafa" style="height: 2px;">
+        </div>
+    </div>
+    <a id="scrollup" onclick="smoothscroll()" style="cursor: pointer;position:fixed;z-index: 101;display:none;right: 10px;bottom: 20px">^</a>
+</div>
+</body>
+<script>
+    var index;
+    var coollike = false;
+    var cooldownload = false;
+    var picid = -1;
+    var vm = new Vue({
+        el:'#app',
+        data:{
+            pics:[],
+            name:'',
+            desc:'',
+            cool:false,
+            pagenumber:1,
+            search:'',
+            nonepic:false,
+            nonesearch:false
+        },
+        methods:{
+            showdiv(src,likes,desc,name,time,download,id) {
+                picid = id;
+                index = layer.open({
+                    type: 1,
+                    title: false,
+                    // skin: 'layui-layer-nobg',
+                    area: ['90%', '90%'], //宽高
+                    offset: 'auto',
+                    anim: 2,
+                    shadeClose: true, //开启遮罩关闭
+                    closeBtn: 1, //不显示关闭按钮
+                    end:function () {
+                        coollike = false;
+                        cooldownload = false;
+                    },
+                    content:
+                        '<span style="float: left;cursor: pointer;font-weight: bold;color: gainsboro;margin-left: 1%;margin-top: 5px;font-size:20px;position: fixed" onclick="closedesc()">X</span>' +
+                        '<span style="float: left;margin-top: 1%;font-weight: bold;margin-left: 6%">'+name+'<br><span style="color: gray;font-weight: normal;font-size: 12px;margin-top: 0">'+time+'</span></span>'+
+                        '<div style="text-align: right">' +
+                        '<button id="likesbutton" onclick="uplikes()" style="margin-right: 1%;margin-top: 1%" align="center" class="btn btn-outline-secondary">💚'+likes+'</button>' +
+                        '<a download="" href="http://localhost:63342/alicepichtml/'+src+'"><button id="downloadbutton" onclick="updownload()" style="margin-right: 5%;margin-top: 1%" align="center" class="btn btn-outline-secondary">下载'+download+'</button></a></div>'+
+                        '<div><p align="center"><img class="imgs" style="cursor:pointer;" src="'+src+'"/></p></div>'+
+                        '<div style="margin-top: -1%;margin-left: 5%">' +
+                        '<span class="input-group-text" id="basic-addon1" style="width: 95%;margin-bottom: 2%">'+desc+'</span>'
+                });
+            },
+            getAdd(name) {
+                var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+                var r = window.location.search.substr(1).match(reg);
+                if(r!=null)return  decodeURI(r[2]); return null;
+            }
+        },
+        created(){
+            var _this = this;
+            this.search=this.getAdd("search");
+            if (this.search === null) {
+                _this.nonesearch = true;
+                return
+            }
+            axios.get('http://39.105.22.132:8080/selectpiclikename?name='+this.search+'&pagenumber=1&pagesize=15')
+                .then(function (response) {
+                    if(response.data==="error"){
+                        layer.msg("你错了，换个网站再试吧")
+                        return
+                    }
+                    _this.pics = response.data;
+                    if (_this.pics.length<=0){
+                        _this.nonepic = true;
+                    }
+                })
+                .catch(function (error) {
+                    layer.msg("网络异常")
+                });
+        },
+        mounted(){
+            var _this = this;
+            window.onscroll= function(){
+                //变量t是滚动条滚动时，距离顶部的距离
+                var t = document.documentElement.scrollTop||document.body.scrollTop;
+                var clientHeight = document.body.clientHeight;
+                var screen = document.documentElement.clientHeight;
+                var scrollup = document.getElementById('scrollup');
+                //当滚动到距离顶部200px时，返回顶部的锚点显示
+                if(t>=200){
+                    scrollup.style.display="block";
+                }else{          //恢复正常
+                    scrollup.style.display="none";
+                }
+                if (t>clientHeight-screen-clientHeight/10){
+                    if (_this.cool) {
+                        return
+                    }
+                    _this.cool = true;
+                    _this.pagenumber+=1;
+                    axios.get('http://39.105.22.132:8080/selectpiclikename?name='+_this.search+'&pagenumber='+_this.pagenumber+'&pagesize=15')
+                        .then(function (response) {
+                            if(response.data.info==="error"){
+                                layer.msg('你又错了');
+                                return
+                            }
+                            if (response.data.length <=0) {
+                                layer.msg('没了')
+                                return
+                            }
+                            _this.pics = _this.pics.concat(response.data.info)
+                            _this.cool = false
+                        })
+                        .catch(function (error) {
+                            // handle error
+                            layer.msg("网络异常")
+                        });
+                }
+            };
+        }
+    });
+    function uplikes() {
+        if(coollike){
+            return
+        }
+        coollike = true;
+        axios.get('http://39.105.22.132:8080/uplikes?id='+picid).then(function (response) {
+            if (response.data === 'successful') {
+                document.getElementById("likesbutton").innerText = '💚'+(parseInt(document.getElementById("likesbutton").innerText.substring(2))+1);
+                return
+            }
+            if (response.data === 'error') {
+                layer.msg("当前环境异常，请刷新后重试");
+                return
+            }
+            layer.msg("当前环境异常，请刷新后重试");
+        }).catch(function (reason) {
+            layer.msg("当前网络异常，请重试");
+            coollike = false;
+        });
+    }
+    function smoothscroll() {
+        var currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
+        if (currentScroll > 0) {
+            window.requestAnimationFrame(smoothscroll);
+            window.scrollTo (0,currentScroll - (currentScroll/5));
+        }
+    }
+    function closedesc(){
+        layer.close(index);
+    }
+    function searchtop() {
+        if (event.keyCode === 13) {
+            window.location.href="/search.html?search="+document.getElementById("searchtop").value;
+        }
+    }
+    function backhome() {
+        window.location.href="/"
+    }
+</script>
+<style>
+    #scrollup{
+        background: #777;
+        color:#eee;
+        font-size: 40px;
+        text-align: center;
+        text-decoration: none;
+        bottom:65px;
+        right:20px;
+        overflow: hidden;
+        width:46px;
+        height:46px;
+        border:none;
+        opacity:.8;
+    }
+    .imgs{
+        margin-top: 1%;
+        width: 90%;
+        height: auto;
+    }
+    .masonry {
+        column-count: 5; column-gap: 0;
+    }
+    .item {
+        width: 100%;
+        break-inside: avoid;
+        box-sizing: border-box;
+        padding: 0 5px 10px;
+        transition: all 0.2s;
+    }
+    .item:hover{
+        opacity:0.7;
+        filter:alpha(opacity=70);
+    }
+    @media (min-width: 400px) {
+        .masonry { column-count: 2; }
+    }
+    @media (min-width: 1200px) {
+        .masonry { column-count: 3; }
+    }
+    .topheard{
+        width: 100%;
+        height: 70px;
+        background-color: white;
+    }
+    .input-group-prepend{
+        width: 80%;
+        height: 70%;
+        color: white;
+        margin-left: 1%;
+        margin-top: 1%;
+    }
+</style>
+</html>

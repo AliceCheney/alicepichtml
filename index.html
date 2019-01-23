@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>一个集才华美貌于一身的图片网站</title>
-    <link rel="icon" href="image/图片2-01.png" type="images/x-ico" />
+    <link rel="icon" href="image/titleimg.png" type="images/x-ico" />
     <meta charset = "utf-8">
     <link rel="stylesheet" type="text/css" href="lib/css/layer.css">
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
@@ -19,9 +19,9 @@
         <img  class='hero__background-image' src="image/top.jpg">
     </div>
     <div class="input-group mb-3">
-        <input  style="background: rgba(0,0,0,0.2);color: white" type="text" class="form-control" placeholder="找什么鸭??" aria-label="Recipient's username" aria-describedby="basic-addon2">
-        <div class="input-group-append">
-            <span  style="background: rgba(0,0,0,0.2);" class="input-group-text" id="basic-addon2"><a style="text-decoration: none" onclick="check()" href="#">🔍</a></span>
+        <input id="searchbottom" onkeypress="searchbottom()" style="background: rgba(0,0,0,0.2);color: white" type="text" class="form-control" placeholder="找什么鸭??" aria-label="Recipient's username" aria-describedby="basic-addon2">
+        <div class="input-group-append" style="cursor: pointer" onclick="searchbottomclick()">
+            <span style="background: rgba(0,0,0,0.2);" class="input-group-text" id="basic-addon2">🔍</span>
         </div>
     </div>
 </head>
@@ -39,10 +39,10 @@
     <div style="position: fixed;top: 0;width: 100%;background-color: white">
         <div class="topheard">
             <div class="input-group-prepend">
-                <img src="image/图片2-01.png" style="width: 6%;height: 100%;">&nbsp;&nbsp;
-                <span style="color: black;margin-top:1%;font-weight: bolder">Cheneypic</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <input type="text" class="form-control"  placeholder="嘿~" aria-label="Username" aria-describedby="basic-addon1">
-                <span class="input-group-text" id="basic-addon1" style="background-color: white"><a style="text-decoration: none" onclick="" href="#">🔍</a></span>
+                <img onclick="smoothscroll()" src="image/titleimg.png" style="cursor: pointer;width: 6%;height: 100%;">&nbsp;&nbsp;
+                <span onclick="smoothscroll()" style="cursor: pointer;color: black;margin-top:1%;font-weight: bolder">Cheneypic</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <input id="searchtop" onkeypress="searchtop()"  type="text" class="form-control"  placeholder="嘿~" aria-label="Username" aria-describedby="basic-addon1">
+                <span onclick="searchtopclick()" class="input-group-text" id="basic-addon1" style="cursor: pointer;background-color: white">🔍</span>
                 <div>
                     <button type="button" class="btn btn-outline-secondary" style="margin-top: 1%;margin-left: 140%;float: left;height: 100%;" onclick="putpic()">提交照片</button>
                 </div>
@@ -286,6 +286,42 @@
     function closedesc(){
         layer.close(index);
     }
+    function searchtop() {
+        if (event.keyCode === 13) {
+            let input = document.getElementById("searchtop").value
+            if (input === '') {
+                layer.tips("搜索内容不能为空","#searchtop")
+                return
+            }
+            window.location.href="/search.html?search="+input;
+        }
+    }
+    function searchbottom() {
+        if (event.keyCode === 13) {
+            let input = document.getElementById("searchbottom").value
+            if (input === '') {
+                layer.tips("搜索内容不能为空","#searchbottom")
+                return
+            }
+            window.location.href="/search.html?search="+input;
+        }
+    }
+    function searchbottomclick() {
+        let input = document.getElementById("searchbottom").value
+        if (input === '') {
+            layer.tips("搜索内容不能为空","#searchbottom")
+            return
+        }
+        window.location.href="/search.html?search="+input;
+    }
+    function searchtopclick() {
+        let input = document.getElementById("searchtop").value
+        if (input === '') {
+            layer.tips("搜索内容不能为空","#searchtop")
+            return
+        }
+        window.location.href="/search.html?search="+input;
+    }
 </script>
 <style>
     #scrollup{
@@ -303,7 +339,7 @@
         opacity:.8;
     }
     #uploaddiv{
-        background-image: url('image/1x.png');
+        background-image: url('image/uploadimg.png');
         cursor:pointer;
         width: 100%;
         height: 300px;
